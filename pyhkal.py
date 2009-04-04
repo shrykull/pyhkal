@@ -337,7 +337,8 @@ class KarmaMod(IRCBotMod):
                         e = KarmaEntry(x[2][:-2])
                         self.karmadict[x[2][:-2]] = e
                     self.head.sendMsg(matchlist[1],x[2][:-2] + " hat einen karmawert von " + str(self.karmadict[x[2][:-2]].value))
-            obj2file(self.karmadict,self.filename)
+            if (karmalist != []):
+                obj2file(self.karmadict,self.filename)
 class KarmaEntry(object):
     karmaspam = datetime.timedelta(0,600)
     def __init__(self,name):
