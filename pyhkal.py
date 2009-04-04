@@ -82,7 +82,11 @@ class IRCBot(asynchat.async_chat):
             return
         print "( >> )", data
 
-    def addModule(self, module):
+    def addModule(self, constructor,params=None):
+        if (not params):
+            module = constructor(self)
+        else:
+            module = constructor(self,*params)
         self.MODLIST.append(module)
 
     def sendraw(self, string):
@@ -543,12 +547,12 @@ def exportconf():
 def exportperform():
     obj2file(pyhkal.performqueue,pyhkal.performfilename)
 
-pyhkal.addModule(AdminMod(pyhkal,ADMINAUTHPASS))
-pyhkal.addModule(DecideMod(pyhkal))
-pyhkal.addModule(CubeMod(pyhkal))
-pyhkal.addModule(KarmaMod(pyhkal))
-pyhkal.addModule(TikkleMod(pyhkal))
-pyhkal.addModule(timerMod(pyhkal))
-pyhkal.addModule(toolsMod(pyhkal))
+pyhkal.addModule(AdminMod,[ADMINAUTHPASS])
+pyhkal.addModule(DecideMod)
+pyhkal.addModule(CubeMod)
+pyhkal.addModule(KarmaMod)
+pyhkal.addModule(TikkleMod)
+pyhkal.addModule(timerMod)
+pyhkal.addModule(toolsMod)
 
 asyncore.loop()
