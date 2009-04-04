@@ -158,17 +158,15 @@ class SpamQueue(object):
 
 
 class IRCBotMod(object):
-    def __init__(self,head,name,regexpattern):
-        self.name = name
+    def __init__(self,head):
         self.head = head
-        self.regexpattern = regexpattern
-        matcher = re.compile(regexpattern)
 
 class AdminMod(IRCBotMod):
     adminhosts = []
     storage = {}
-    def __init__(self,head,name,regex,adminpass="defaultpass"):
-        IRCBotMod.__init__(self,head,name,regex)
+    regexpattern = r':(.+) (?:PRIVMSG|NOTICE) ([\S]+) :(!do|!py|!pydo|!auth|!rehash|spam\?)(?: (.+)|$)'
+    def __init__(self,head,adminpass="defaultpass"):
+        IRCBotMod.__init__(self,head)
         self.handleInput = self.handler
         self.adminpass = adminpass
     def handler(self,matchlist):
@@ -213,9 +211,10 @@ class AdminMod(IRCBotMod):
                     sys.modules.pop("pyhkal")
                 import pyhkal
 class CubeMod(IRCBotMod):
+    regexpattern = r':(.+) PRIVMSG ([\S]+) :(.+)'
     cubers = []
-    def __init__(self,head,name,regexpattern):
-        IRCBotMod.__init__(self,head,name,regexpattern)
+    def __init__(self,head):
+        IRCBotMod.__init__(self,head)
         self.handleInput = self.handler
     def handler(self,matchlist):
         host = matchlist[0]
@@ -278,8 +277,9 @@ class cubetimer(object):
             r = r[1:]
         return r[0:-3]
 class DecideMod(IRCBotMod):
-    def __init__(self,head,name,regexpattern):
-        IRCBotMod.__init__(self,head,name,regexpattern)
+    regexpattern = r':(.+) PRIVMSG ([\S]+) :!decide (.+)'
+    def __init__(self,head):
+        IRCBotMod.__init__(self,head)
         self.handleInput = self.handler
 
     def handler(self,matchlist):
@@ -299,9 +299,10 @@ class DecideMod(IRCBotMod):
             else:
                 return "dagegen"
 class KarmaMod(IRCBotMod):
+    regexpattern = r':(.+) PRIVMSG ([\S]+) :(.+)'
     filename = "karma.dict"
-    def __init__(self,head,name,regexpattern):
-        IRCBotMod.__init__(self,head,name,regexpattern)
+    def __init__(self,head):
+        IRCBotMod.__init__(self,head)
         self.handleInput = self.handler
         try:
             self.karmadict = file2obj(self.filename)
@@ -350,9 +351,10 @@ class KarmaEntry(object):
         return timedelta2string(self.karmaspam - (datetime.datetime.now() - self.time))[:-4]
 
 class TikkleMod(IRCBotMod):
+    regexpattern = r':(.+) PRIVMSG ([\S]+) :(.+)'
     filename = "tikkle.dict"
-    def __init__(self,head,name,regexpattern):
-        IRCBotMod.__init__(self,head,name,regexpattern)
+    def __init__(self,head):
+        IRCBotMod.__init__(self,head)
         self.handleInput = self.handler
         try:
             self.tikklers = file2obj(self.filename)
@@ -420,8 +422,9 @@ class tikkleuser(object):
         self.greeting = t
 
 class timerMod(IRCBotMod):
-    def __init__(self,head,name,regex):
-        IRCBotMod.__init__(self,head,name,regex)
+    regexpattern = r':(.+) PRIVMSG ([\S]+) :.*timer:(\d+):(.*)'
+    def __init__(self,head):
+        IRCBotMod.__init__(self,head)
         self.handleInput = self.handler
     def handler(self,matchlist):
         host = matchlist[0]
@@ -432,9 +435,10 @@ class timerMod(IRCBotMod):
             self.head.sendNotice(nick(host),"Timer started.")
             Timer(int(time),self.head.sendMsg,(target,"timed message by " + nick(host) + ": " + text)).start()
 class toolsMod(IRCBotMod):
+    regexpattern = r'(.+)'
     triggerlist = []
-    def __init__(self,head,name,regex):
-        IRCBotMod.__init__(self,head,name,regex)
+    def __init__(self,head):
+        IRCBotMod.__init__(self,head)
         self.handleInput = self.handler
     def handler(self,text):
         elementstodelete =  []
@@ -539,12 +543,12 @@ def exportconf():
 def exportperform():
     obj2file(pyhkal.performqueue,pyhkal.performfilename)
 
-pyhkal.addModule(AdminMod(pyhkal,"admin",r':(.+) (?:PRIVMSG|NOTICE) ([\S]+) :(!do|!py|!pydo|!auth|!rehash|spam\?)(?: (.+)|$)',ADMINAUTHPASS))
-pyhkal.addModule(DecideMod(pyhkal, "decide",r':(.+) PRIVMSG ([\S]+) :!decide (.+)'))
-pyhkal.addModule(CubeMod(pyhkal,"cube",r':(.+) PRIVMSG ([\S]+) :(.+)'))
-pyhkal.addModule(KarmaMod(pyhkal,"karma",r':(.+) PRIVMSG ([\S]+) :(.+)'))
-pyhkal.addModule(TikkleMod(pyhkal,"tikkle",r':(.+) PRIVMSG ([\S]+) :(.+)'))
-pyhkal.addModule(timerMod(pyhkal,"tikkle",r':(.+) PRIVMSG ([\S]+) :.*timer:(\d+):(.*)'))
-pyhkal.addModule(toolsMod(pyhkal,"tools",r'(.+)'))
+pyhkal.addModule(AdminMod(pyhkal,ADMINAUTHPASS))
+pyhkal.addModule(DecideMod(pyhkal))
+pyhkal.addModule(CubeMod(pyhkal))
+pyhkal.addModule(KarmaMod(pyhkal))
+pyhkal.addModule(TikkleMod(pyhkal))
+pyhkal.addModule(timerMod(pyhkal))
+pyhkal.addModule(toolsMod(pyhkal))
 
 asyncore.loop()
