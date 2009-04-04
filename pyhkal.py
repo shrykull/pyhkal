@@ -82,6 +82,9 @@ class IRCBot(asynchat.async_chat):
             return
         print "( >> )", data
 
+    def addModule(self, module):
+        self.MODLIST.append(module)
+
     def sendraw(self, string):
         if (string):
             self.push(string + "\r\n")
@@ -536,14 +539,12 @@ def exportconf():
 def exportperform():
     obj2file(pyhkal.performqueue,pyhkal.performfilename)
 
-admin = AdminMod(pyhkal,"admin",r':(.+) (?:PRIVMSG|NOTICE) ([\S]+) :(!do|!py|!pydo|!auth|!rehash|spam\?)(?: (.+)|$)',ADMINAUTHPASS)
-decide = DecideMod(pyhkal, "decide",r':(.+) PRIVMSG ([\S]+) :!decide (.+)')
-cube = CubeMod(pyhkal,"cube",r':(.+) PRIVMSG ([\S]+) :(.+)')
-karma = KarmaMod(pyhkal,"karma",r':(.+) PRIVMSG ([\S]+) :(.+)')
-tikkle = TikkleMod(pyhkal,"tikkle",r':(.+) PRIVMSG ([\S]+) :(.+)')
-timer = timerMod(pyhkal,"tikkle",r':(.+) PRIVMSG ([\S]+) :.*timer:(\d+):(.*)')
-tools = toolsMod(pyhkal,"tools",r'(.+)')
-
-pyhkal.MODLIST = [admin, decide, cube, karma, tikkle, timer, tools]
+pyhkal.addModule(AdminMod(pyhkal,"admin",r':(.+) (?:PRIVMSG|NOTICE) ([\S]+) :(!do|!py|!pydo|!auth|!rehash|spam\?)(?: (.+)|$)',ADMINAUTHPASS))
+pyhkal.addModule(DecideMod(pyhkal, "decide",r':(.+) PRIVMSG ([\S]+) :!decide (.+)'))
+pyhkal.addModule(CubeMod(pyhkal,"cube",r':(.+) PRIVMSG ([\S]+) :(.+)'))
+pyhkal.addModule(KarmaMod(pyhkal,"karma",r':(.+) PRIVMSG ([\S]+) :(.+)'))
+pyhkal.addModule(TikkleMod(pyhkal,"tikkle",r':(.+) PRIVMSG ([\S]+) :(.+)'))
+pyhkal.addModule(timerMod(pyhkal,"tikkle",r':(.+) PRIVMSG ([\S]+) :.*timer:(\d+):(.*)'))
+pyhkal.addModule(toolsMod(pyhkal,"tools",r'(.+)'))
 
 asyncore.loop()
