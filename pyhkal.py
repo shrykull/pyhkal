@@ -579,3 +579,7 @@ pyhkal.addModule(ToolsMod)
 pyhkal.addModule(StfuMod)
 
 asyncore.loop()
+print "reloading - asyncore dumped"
+if ("pyhkal" in sys.modules):
+    sys.modules.pop("pyhkal")
+import pyhkal
