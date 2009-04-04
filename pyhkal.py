@@ -531,7 +531,7 @@ except IOError:
 pyhkal = IRCBot(SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL)
 
 def exportconf():
-    obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,FAiLHKAL,ADMINAUTHPASS),"pyhkal.conf")
+    obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS),"pyhkal.conf")
 def exportperform():
     obj2file(pyhkal.performqueue,pyhkal.performfilename)
 
