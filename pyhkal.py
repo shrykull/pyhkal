@@ -13,18 +13,19 @@ class IRCBot(asynchat.async_chat):
     MODLIST = []
     performqueue = []
     performfilename = "perform.list"
-    def __init__(self, server="irc.quakenet.org", port=6667, password="", nickname="FAiLHKAL", mainchannel="#ich-sucke"):
+    def __init__(self, server="irc.quakenet.org", port=6667,ident="nexus", password="", nickname="FAiLHKAL", mainchannel="#ich-sucke"):
         asynchat.async_chat.__init__(self)
         self.set_terminator("\n")
         self.data = ""
         
         self.server = server
         self.port = port
+        self.ident = ident
         self.nickname = nickname
         self.mainchannel = mainchannel
         
         self.initcommands = [
-            "USER nexus nexus nexus :Python-TiHKAL",
+            "USER " + self.ident + " " + self.ident + " " + self.ident + " :Python-TiHKAL",
             "PASS " + password,
             "NICK " + self.nickname
             ]
@@ -33,6 +34,7 @@ class IRCBot(asynchat.async_chat):
             self.performqueue = file2obj(self.performfilename)
         except IOError:
             self.performqueue = []
+            obj2file(self.performqueue,self.performfilename)
             
         self.spamqueue = SpamQueue(5,5)
         self.create_socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -159,7 +161,7 @@ class IRCBotMod(object):
         matcher = re.compile(regexpattern)
 
 class AdminMod(IRCBotMod):
-    adminhost = "no u"
+    adminhosts = []
     storage = {}
     def __init__(self,head,name,regex,adminpass="defaultpass"):
         IRCBotMod.__init__(self,head,name,regex)
@@ -171,11 +173,16 @@ class AdminMod(IRCBotMod):
         command = matchlist[2]
         text = matchlist[3]
         if (command == "!auth") and (text == self.adminpass):
-            if ("!" in self.adminhost):
-                self.head.sendMsg(nick(self.adminhost),"Master changed: New admin is " + host)
-            self.adminhost = host
-            self.head.sendMsg(target,"Done. Hello " + self.adminhost)
-        if (host == self.adminhost):
+            if (host not in self.adminhosts):
+                if (self.adminhosts != []):
+                    for x in self.adminhosts:
+                        self.head.sendMsg(nick(x),"Master added: New admin is " + host)
+                self.adminhosts.append(host)
+            adminNickList = []
+            for x in self.adminhosts:
+                adminNickList.append(nick(x))
+            self.head.sendMsg(target,"Done. Admins: " + str(adminNickList))
+        if (host in self.adminhosts):
             if (command == "!do"):
                 self.head.sendraw(text)
             elif (command == "!py"):
@@ -510,19 +517,21 @@ def rand(min = 1,max = 100):
     return int(round(min + random() * (max - min)))
     
 try:
-    (SERVER,PORT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS) = file2obj("pyhkal.conf")
+    (SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS) = file2obj("pyhkal.conf")
 except IOError:
     PORT = 6667
     SERVER = "irc.quakenet.org"
     NICKNAME = "FAiLHKAL" + str(rand(1,9999999))
+    IDENT = "FAiLHKAL"
     PASS = ""
     MAINCHANNEL = "#ich-sucke"
     ADMINAUTHPASS = "default"
+    obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS),"pyhkal.conf")
 
-pyhkal = IRCBot(SERVER,PORT,PASS,NICKNAME,MAINCHANNEL)
+pyhkal = IRCBot(SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL)
 
 def exportconf():
-    obj2file((SERVER,PORT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS),"pyhkal.conf")
+    obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,FAiLHKAL,ADMINAUTHPASS),"pyhkal.conf")
 def exportperform():
     obj2file(pyhkal.performqueue,pyhkal.performfilename)
 
