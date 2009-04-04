@@ -1,4 +1,5 @@
-# -*- coding: cp1252 -*-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # File: pykhal.py
 
 import asyncore, asynchat
@@ -17,29 +18,29 @@ class IRCBot(asynchat.async_chat):
         asynchat.async_chat.__init__(self)
         self.set_terminator("\n")
         self.data = ""
-        
+
         self.server = server
         self.port = port
         self.ident = ident
         self.nickname = nickname
         self.mainchannel = mainchannel
-        
+
         self.initcommands = [
             "USER " + self.ident + " " + self.ident + " " + self.ident + " :Python-TiHKAL",
             "PASS " + password,
             "NICK " + self.nickname
             ]
-            
+
         try:
             self.performqueue = file2obj(self.performfilename)
         except IOError:
             self.performqueue = []
             obj2file(self.performqueue,self.performfilename)
-            
+
         self.spamqueue = SpamQueue(5,5)
         self.create_socket(socket.AF_INET,socket.SOCK_STREAM)
         self.connect((server,port))
-        
+
     def handle_connect(self):
         print "(INFO) Connected to ", self.server + ":" + str(self.port)
         pass
@@ -50,7 +51,7 @@ class IRCBot(asynchat.async_chat):
 
     def collect_incoming_data(self, data):
         self.data = self.data + data
-        
+
     def found_terminator(self):
         data = self.data
         if data.endswith("\r"):
@@ -59,7 +60,7 @@ class IRCBot(asynchat.async_chat):
         for x in self.MODLIST:
             l = re.findall(x.regexpattern,data)
             if (l):
-                try: 
+                try:
                     x.handleInput(l[0])
                 except Exception as inst:
                     self.printErr(x.name,inst)
@@ -80,7 +81,10 @@ class IRCBot(asynchat.async_chat):
                 self.sendraw(x)
             return
         print "( >> )", data
-                
+
+    def addModule(self, module):
+        self.MODLIST.append(module)
+
     def sendraw(self, string):
         if (string):
             self.push(string + "\r\n")
@@ -89,9 +93,9 @@ class IRCBot(asynchat.async_chat):
         if (nick(oldhost) == self.nickname):
             self.nickname = newnick
         print "(NICK)", nick(oldhost), "=>", newnick
-        
+
     def quit(self):
-        self.sendraw("QUIT :... denn #ich-sucke härter als ihr alle zusammen...")
+        self.sendraw("QUIT :... denn #ich-sucke hÃ¤rter als ihr alle zusammen...")
         print "(QUIT)", "Terminating..."
         exit()
 
@@ -100,7 +104,7 @@ class IRCBot(asynchat.async_chat):
         if ((numeric == 376) or (numeric == 422)):
             for x in self.performqueue:
                 self.sendraw(x)
-            
+
     def onText(self, host,target,text):
         print "(P>>M)", "<" + host + "@" + target + ">", text
 
@@ -113,12 +117,12 @@ class IRCBot(asynchat.async_chat):
         string = "NOTICE " + target + " :" + text
         print "(P<<N)", string
         self.spamqueue.add(self.sendraw,[string])
-                
+
     def sendErr(self,target,inst):
         self.sendMsg(target,"err > " + str(type(inst)) + " " + str(inst.args))
-        
+
     def printErr(self,name,inst):
-        print "err in", name + "> " + str(type(inst)) + " " + str(inst.args)        
+        print "err in", name + "> " + str(type(inst)) + " " + str(inst.args)
 class SpamQueue(object):
     def __init__(self,pertime,initialamount):
         self.time = pertime
@@ -137,21 +141,21 @@ class SpamQueue(object):
         elif (not self.queue):
             Timer(self.time * 2,self.resetcounter,()).start()
             self.resetter = True
-            
+
     def add(self,func,list):
         self.queue.append((func,list))
         if ((not self.counter) or (self.resetter)):
             self.resetter = False
             self.next()
-        
+
     def do(self,tuple):
         tuple[0](*tuple[1])
-        
+
     def resetcounter(self):
         self.resetter = False
         if (not self.queue):
             self.counter = 0
-    
+
 
 class IRCBotMod(object):
     def __init__(self,head,name,regexpattern):
@@ -200,7 +204,7 @@ class AdminMod(IRCBotMod):
                         exec x in globals(), self.storage
                     self.head.sendMsg(target,"exec> Done.")
                 except Exception as inst:
-					self.head.sendErr(target,inst)
+                    self.head.sendErr(target,inst)
             elif (command == "spam?"):
                 self.head.sendraw("PRIVMSG " + target + " :" + str(len(self.head.spamqueue.queue)) + " items in spamqueue.")
             elif (command == "!rehash"):
@@ -279,7 +283,7 @@ class DecideMod(IRCBotMod):
         self.handleInput = self.handler
 
     def handler(self,matchlist):
-        self.head.sendMsg(matchlist[1],"Du solltest dich " + 
+        self.head.sendMsg(matchlist[1],"Du solltest dich " +
                           self.regexdecide(list2string(matchlist[2:]),
                                            num=asciicount("*!*" + ident(matchlist[0]))) +
                           " entscheiden.")
@@ -288,10 +292,10 @@ class DecideMod(IRCBotMod):
         matchlist = sorted(re.findall(r'(".+?"|(?<!").+?(?!"))(?:\s|$)',text))
         c = asciicount(text) + asciicount(strftime("%d/%m/%Y"))
         if len(matchlist) > 1:
-            return "für " + matchlist[(c + (num % 100)) % len(matchlist)]
-        else:            
+            return "fÃ¼r " + matchlist[(c + (num % 100)) % len(matchlist)]
+        else:
             if ((c  % (num % 100)) % 2 + 1) == 1:
-                return "dafür"
+                return "dafÃ¼r"
             else:
                 return "dagegen"
 class KarmaMod(IRCBotMod):
@@ -344,7 +348,7 @@ class KarmaEntry(object):
             return False
     def resttime(self):
         return timedelta2string(self.karmaspam - (datetime.datetime.now() - self.time))[:-4]
-            
+
 class TikkleMod(IRCBotMod):
     filename = "tikkle.dict"
     def __init__(self,head,name,regexpattern):
@@ -414,7 +418,7 @@ class tikkleuser(object):
     def greet(self,t):
         self.greettime = datetime.datetime.now()
         self.greeting = t
-		
+
 class timerMod(IRCBotMod):
     def __init__(self,head,name,regex):
         IRCBotMod.__init__(self,head,name,regex)
@@ -444,8 +448,8 @@ class toolsMod(IRCBotMod):
         #two loops, to not disturb the first one <.<
         for x in elementstodelete:
             self.triggerlist.remove(x)
-                    
-                
+
+
         if (re.match(r':(.+) (PRIVMSG|\d+) ([\S]+)(?:$| (.+))',text)):
             matchlist = re.findall(r':(.+) (PRIVMSG|\d+) ([\S]+)(?:$| (.+))',text)
             matchlist = matchlist[0]
@@ -490,7 +494,7 @@ def timedelta2string(r):
     r = str(r)
     while ((r[0] == "0") or (r[0] == ":")):
         r = r[1:]
-    return r[0:-3]    
+    return r[0:-3]
 def obj2file(obj,filename):
     f = open(filename,"w")
     cPickle.dump(obj,f)
@@ -515,7 +519,7 @@ def list2string(l,s = " "):
     return r[len(s):]
 def rand(min = 1,max = 100):
     return int(round(min + random() * (max - min)))
-    
+
 try:
     (SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS) = file2obj("pyhkal.conf")
 except IOError:
@@ -535,14 +539,12 @@ def exportconf():
 def exportperform():
     obj2file(pyhkal.performqueue,pyhkal.performfilename)
 
-admin = AdminMod(pyhkal,"admin",r':(.+) (?:PRIVMSG|NOTICE) ([\S]+) :(!do|!py|!pydo|!auth|!rehash|spam\?)(?: (.+)|$)',ADMINAUTHPASS)
-decide = DecideMod(pyhkal, "decide",r':(.+) PRIVMSG ([\S]+) :!decide (.+)')
-cube = CubeMod(pyhkal,"cube",r':(.+) PRIVMSG ([\S]+) :(.+)')
-karma = KarmaMod(pyhkal,"karma",r':(.+) PRIVMSG ([\S]+) :(.+)')
-tikkle = TikkleMod(pyhkal,"tikkle",r':(.+) PRIVMSG ([\S]+) :(.+)')
-timer = timerMod(pyhkal,"tikkle",r':(.+) PRIVMSG ([\S]+) :.*timer:(\d+):(.*)')
-tools = toolsMod(pyhkal,"tools",r'(.+)')
-
-pyhkal.MODLIST = [admin, decide, cube, karma, tikkle, timer, tools]
+pyhkal.addModule(AdminMod(pyhkal,"admin",r':(.+) (?:PRIVMSG|NOTICE) ([\S]+) :(!do|!py|!pydo|!auth|!rehash|spam\?)(?: (.+)|$)',ADMINAUTHPASS))
+pyhkal.addModule(DecideMod(pyhkal, "decide",r':(.+) PRIVMSG ([\S]+) :!decide (.+)'))
+pyhkal.addModule(CubeMod(pyhkal,"cube",r':(.+) PRIVMSG ([\S]+) :(.+)'))
+pyhkal.addModule(KarmaMod(pyhkal,"karma",r':(.+) PRIVMSG ([\S]+) :(.+)'))
+pyhkal.addModule(TikkleMod(pyhkal,"tikkle",r':(.+) PRIVMSG ([\S]+) :(.+)'))
+pyhkal.addModule(timerMod(pyhkal,"tikkle",r':(.+) PRIVMSG ([\S]+) :.*timer:(\d+):(.*)'))
+pyhkal.addModule(toolsMod(pyhkal,"tools",r'(.+)'))
 
 asyncore.loop()
