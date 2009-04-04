@@ -63,7 +63,7 @@ class IRCBot(asynchat.async_chat):
                 try:
                     x.handleInput(l[0])
                 except Exception as inst:
-                    self.printErr(x.name,inst)
+                    self.printErr(str(x),inst)
         if re.match("PING :",data):
             self.sendraw("PONG " + data.split(" ")[1])
             return
@@ -354,6 +354,29 @@ class KarmaEntry(object):
             return False
     def resttime(self):
         return timedelta2string(self.karmaspam - (datetime.datetime.now() - self.time))[:-4]
+class StfuMod(IRCBotMod):
+    regexpattern = r':(.+) PRIVMSG ({0}) :.*(?:(?i)stfu)(\d*).*'
+    moderated = False
+    defaulttime = 1800
+    def __init__(self,head):
+        IRCBotMod.__init__(self,head)
+        self.regexpattern = self.regexpattern.format(self.head.mainchannel)
+        self.handleInput = self.stfutrigger
+    def stfutrigger(self,matchlist,time=defaulttime):
+        host = matchlist[0]
+        target = matchlist[1]
+        if (matchlist[2]):
+            time = int(matchlist[2])
+        else:
+            time = self.defaulttime
+        if (not self.moderated):
+            self.head.sendMsg(target,"*mute*")
+            self.head.sendraw("mode {0} +m".format(self.head.mainchannel))
+            Timer(time,self.head.sendraw,[("mode {0} -m").format(self.head.mainchannel)]).start()
+        else:
+            self.head.sendMsg(target,"*unmute*")
+            self.head.sendraw("mode {0} -m".format(self.head.mainchannel))
+        self.moderated = not self.moderated
 
 class TikkleMod(IRCBotMod):
     regexpattern = r':(.+) PRIVMSG ([\S]+) :(.+)'
@@ -365,7 +388,6 @@ class TikkleMod(IRCBotMod):
             self.tikklers = file2obj(self.filename)
         except Exception:
             self.tikklers = {}
-        self.head = head
     def handler(self,matchlist):
         host = matchlist[0]
         target = matchlist[1] if matchlist[1] != self.head.nickname else nick(host)
@@ -426,7 +448,7 @@ class tikkleuser(object):
         self.greettime = datetime.datetime.now()
         self.greeting = t
 
-class timerMod(IRCBotMod):
+class TimerMod(IRCBotMod):
     regexpattern = r':(.+) PRIVMSG ([\S]+) :.*timer:(\d+):(.*)'
     def __init__(self,head):
         IRCBotMod.__init__(self,head)
@@ -439,7 +461,7 @@ class timerMod(IRCBotMod):
         if (int(time) > 0):
             self.head.sendNotice(nick(host),"Timer started.")
             Timer(int(time),self.head.sendMsg,(target,"timed message by " + nick(host) + ": " + text)).start()
-class toolsMod(IRCBotMod):
+class ToolsMod(IRCBotMod):
     regexpattern = r'(.+)'
     triggerlist = []
     def __init__(self,head):
@@ -471,7 +493,6 @@ class toolsMod(IRCBotMod):
                     self.head.sendraw("whois " + w[1] + " " + w[1])
                     self.addtrigger([target,self.identhost,r'.+ 311 (?:[\S]+) (?:[\S]+) ([\S]+) ([\S]+).+'])
                     self.addtrigger([target,"Real Name: ",r'.+ 311 (?:[\S]+) .+:(.+)'])
-                    #self.addtrigger([target,"Channels: ",r'.+ 319 (?:[\S]+) (?:[\S]+) :(.+)'])
                     self.addtrigger([target,"Authnick: ",r'.+ 330 (?:[\S]+) (?:[\S]+) ([\S]+).+'])
                     self.addtrigger([target,self.raw317reply,r'.+ 317 (?:[\S]+) (?:[\S]+) (\d+ \d+)'])
                 elif (w[1] == "alive?"):
@@ -553,7 +574,8 @@ pyhkal.addModule(DecideMod)
 pyhkal.addModule(CubeMod)
 pyhkal.addModule(KarmaMod)
 pyhkal.addModule(TikkleMod)
-pyhkal.addModule(timerMod)
-pyhkal.addModule(toolsMod)
+pyhkal.addModule(TimerMod)
+pyhkal.addModule(ToolsMod)
+pyhkal.addModule(StfuMod)
 
 asyncore.loop()
