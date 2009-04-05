@@ -129,6 +129,7 @@ class IRCBot(asynchat.async_chat):
 
     def printErr(self,name,inst):
         print "err in", name + "> " + str(type(inst)) + " " + str(inst.args)
+
 class SpamQueue(object):
     def __init__(self,pertime,initialamount):
         self.time = pertime
@@ -219,6 +220,7 @@ class AdminMod(IRCBotMod):
                 import pyhkal
                 instance.__class__ = pyhkal.IRCBot
                 pyhkal.main(instance)
+            
 class CubeMod(IRCBotMod):
     regexpattern = r':(.+) PRIVMSG ([\S]+) :(.+)'
     cubers = []
@@ -368,6 +370,10 @@ class StfuMod(IRCBotMod):
         self.regexpattern = self.regexpattern.format(self.head.mainchannel)
         self.handleInput = self.stfutrigger
         self.timer = None
+    def __del__(self):
+        if self.timer:
+            self.timer.cancel()
+            self.timer = None
     def stfutrigger(self,matchlist,time=defaulttime):
         host = matchlist[0]
         target = matchlist[1]
@@ -378,15 +384,18 @@ class StfuMod(IRCBotMod):
         if (not self.moderated):
             self.head.sendMsg(target,"*mute*")
             self.head.sendraw("mode {0} +m".format(self.head.mainchannel))
-            self.timer = Timer(time,self.head.sendraw,[("mode {0} -m").format(self.head.mainchannel)])
+            self.moderated = True
+            self.timer = Timer(time,self.unmute)
             self.timer.start()
         else:
             self.head.sendMsg(target,"*unmute*")
-            self.head.sendraw("mode {0} -m".format(self.head.mainchannel))
+            self.unmute()
             if self.timer:
                 self.timer.cancel()
                 self.timer = None
-        self.moderated = not self.moderated
+    def unmute(self):
+        self.moderated = False
+        self.head.sendraw(("mode {0} -m").format(self.head.mainchannel))
 
 class TikkleMod(IRCBotMod):
     regexpattern = r':(.+) PRIVMSG ([\S]+) :(.+)'
@@ -559,8 +568,9 @@ def list2string(l,s = " "):
     return r[len(s):]
 def rand(min = 1,max = 100):
     return int(round(min + random() * (max - min)))
+    
 
-def main(instance=None):
+def main(instance):
     global bot
     try:
         (SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS) = file2obj("pyhkal.conf")
@@ -573,8 +583,10 @@ def main(instance=None):
         MAINCHANNEL = "#ich-sucke"
         ADMINAUTHPASS = "default"
         obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS),"pyhkal.conf")
+
     if instance:
-        bot = IRCBot.__init__(instance, PORT,IDENT,PASS,NICKNAME,MAINCHANNEL, False)
+        IRCBot.__init__(instance, SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL, False)
+        bot = instance
     else:
         bot = IRCBot(SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL)
 
@@ -582,7 +594,7 @@ def main(instance=None):
         obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS),"pyhkal.conf")
     def exportperform():
         obj2file(bot.performqueue,bot.performfilename)
-
+        
     bot.addModule(AdminMod,[ADMINAUTHPASS])
     bot.addModule(DecideMod)
     bot.addModule(CubeMod)
@@ -593,9 +605,9 @@ def main(instance=None):
     bot.addModule(StfuMod)
 
     asyncore.loop()
+
     print "reloading - asyncore dumped"
     main()
 
 if __name__ == '__main__':
     main()
-    
