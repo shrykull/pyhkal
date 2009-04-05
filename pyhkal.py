@@ -561,6 +561,7 @@ def rand(min = 1,max = 100):
     return int(round(min + random() * (max - min)))
 
 def main(instance=None):
+    global bot
     try:
         (SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS) = file2obj("pyhkal.conf")
     except IOError:
