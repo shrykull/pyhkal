@@ -213,7 +213,10 @@ class AdminMod(IRCBotMod):
                 self.head.sendraw("PRIVMSG " + target + " :Reimporting code...",)
                 if ("pyhkal" in sys.modules):
                     sys.modules.pop("pyhkal")
+                instance = bot
                 import pyhkal
+                instance.__class__ = pyhkal.IRCBot
+                pyhkal.main(instance)
 class CubeMod(IRCBotMod):
     regexpattern = r':(.+) PRIVMSG ([\S]+) :(.+)'
     cubers = []
@@ -362,6 +365,7 @@ class StfuMod(IRCBotMod):
         IRCBotMod.__init__(self,head)
         self.regexpattern = self.regexpattern.format(self.head.mainchannel)
         self.handleInput = self.stfutrigger
+        self.timer = None
     def stfutrigger(self,matchlist,time=defaulttime):
         host = matchlist[0]
         target = matchlist[1]
@@ -372,10 +376,14 @@ class StfuMod(IRCBotMod):
         if (not self.moderated):
             self.head.sendMsg(target,"*mute*")
             self.head.sendraw("mode {0} +m".format(self.head.mainchannel))
-            Timer(time,self.head.sendraw,[("mode {0} -m").format(self.head.mainchannel)]).start()
+            self.timer = Timer(time,self.head.sendraw,[("mode {0} -m").format(self.head.mainchannel)])
+            self.timer.start()
         else:
             self.head.sendMsg(target,"*unmute*")
             self.head.sendraw("mode {0} -m".format(self.head.mainchannel))
+            if self.timer:
+                self.timer.cancel()
+                self.timer = None
         self.moderated = not self.moderated
 
 class TikkleMod(IRCBotMod):
@@ -550,36 +558,39 @@ def list2string(l,s = " "):
 def rand(min = 1,max = 100):
     return int(round(min + random() * (max - min)))
 
-try:
-    (SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS) = file2obj("pyhkal.conf")
-except IOError:
-    PORT = 6667
-    SERVER = "irc.quakenet.org"
-    NICKNAME = "FAiLHKAL" + str(rand(1,9999999))
-    IDENT = "FAiLHKAL"
-    PASS = ""
-    MAINCHANNEL = "#ich-sucke"
-    ADMINAUTHPASS = "default"
-    obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS),"pyhkal.conf")
+def main(instance=None)
+    try:
+        (SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS) = file2obj("pyhkal.conf")
+    except IOError:
+        PORT = 6667
+        SERVER = "irc.quakenet.org"
+        NICKNAME = "FAiLHKAL" + str(rand(1,9999999))
+        IDENT = "FAiLHKAL"
+        PASS = ""
+        MAINCHANNEL = "#ich-sucke"
+        ADMINAUTHPASS = "default"
+        obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS),"pyhkal.conf")
 
-pyhkal = IRCBot(SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL)
+    bot = IRCBot(SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL)
 
-def exportconf():
-    obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS),"pyhkal.conf")
-def exportperform():
-    obj2file(pyhkal.performqueue,pyhkal.performfilename)
+    def exportconf():
+        obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS),"pyhkal.conf")
+    def exportperform():
+        obj2file(bot.performqueue,bot.performfilename)
 
-pyhkal.addModule(AdminMod,[ADMINAUTHPASS])
-pyhkal.addModule(DecideMod)
-pyhkal.addModule(CubeMod)
-pyhkal.addModule(KarmaMod)
-pyhkal.addModule(TikkleMod)
-pyhkal.addModule(TimerMod)
-pyhkal.addModule(ToolsMod)
-pyhkal.addModule(StfuMod)
+    bot.addModule(AdminMod,[ADMINAUTHPASS])
+    bot.addModule(DecideMod)
+    bot.addModule(CubeMod)
+    bot.addModule(KarmaMod)
+    bot.addModule(TikkleMod)
+    bot.addModule(TimerMod)
+    bot.addModule(ToolsMod)
+    bot.addModule(StfuMod)
 
-asyncore.loop()
-print "reloading - asyncore dumped"
-if ("pyhkal" in sys.modules):
-    sys.modules.pop("pyhkal")
-import pyhkal
+    asyncore.loop()
+    print "reloading - asyncore dumped"
+    main()
+
+if __name__ == '__main__':
+    main()
+    
