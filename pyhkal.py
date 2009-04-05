@@ -14,8 +14,9 @@ class IRCBot(asynchat.async_chat):
     MODLIST = []
     performqueue = []
     performfilename = "perform.list"
-    def __init__(self, server="irc.quakenet.org", port=6667,ident="nexus", password="", nickname="FAiLHKAL", mainchannel="#ich-sucke"):
-        asynchat.async_chat.__init__(self)
+    def __init__(self, server="irc.quakenet.org", port=6667,ident="nexus", password="", nickname="FAiLHKAL", mainchannel="#ich-sucke", createSocket=True):
+        if createSocket:
+            asynchat.async_chat.__init__(self)
         self.set_terminator("\n")
         self.data = ""
 
@@ -38,8 +39,9 @@ class IRCBot(asynchat.async_chat):
             obj2file(self.performqueue,self.performfilename)
 
         self.spamqueue = SpamQueue(5,5)
-        self.create_socket(socket.AF_INET,socket.SOCK_STREAM)
-        self.connect((server,port))
+        if createSocket:
+            self.create_socket(socket.AF_INET,socket.SOCK_STREAM)
+            self.connect((server,port))
 
     def handle_connect(self):
         print "(INFO) Connected to ", self.server + ":" + str(self.port)
@@ -570,8 +572,10 @@ def main(instance=None)
         MAINCHANNEL = "#ich-sucke"
         ADMINAUTHPASS = "default"
         obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS),"pyhkal.conf")
-
-    bot = IRCBot(SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL)
+    if instance:
+        bot = IRCBot.__init__(instance, PORT,IDENT,PASS,NICKNAME,MAINCHANNEL, False)
+    else:
+        bot = IRCBot(SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL)
 
     def exportconf():
         obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS),"pyhkal.conf")
