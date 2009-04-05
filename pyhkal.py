@@ -560,7 +560,7 @@ def list2string(l,s = " "):
 def rand(min = 1,max = 100):
     return int(round(min + random() * (max - min)))
 
-def main(instance=None)
+def main(instance=None):
     try:
         (SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS) = file2obj("pyhkal.conf")
     except IOError:
