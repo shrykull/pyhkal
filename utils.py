@@ -4,7 +4,6 @@
 import cPickle
 import time
 from time import strftime
-from random import random
 
 def obj2file(obj,filename):
     f = open(filename,"w")
@@ -27,6 +26,3 @@ def list2string(l,s = " "):
     for x in l:
         r = r + s+ x
     return r[len(s):]
-
-def rand(min = 1,max = 100):
-    return int(round(min + random() * (max - min)))

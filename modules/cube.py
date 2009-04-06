@@ -3,6 +3,7 @@
 
 import datetime
 import re
+from random import randint
 from modules import IRCBotMod
 
 class CubeMod(IRCBotMod):
@@ -45,11 +46,11 @@ class CubeMod(IRCBotMod):
         curMoveOnCurAxis = 5
         scramble = ""
         for x in xrange(0,num):
-            curAxis = rand(0,2)
+            curAxis = randint(0,2)
             while (curAxis == blockedAxis):
-                curAxis = rand(0,2)
+                curAxis = randint(0,2)
             if (lastAxis != curAxis):
-                curMoveOnCurAxis = rand(0,1)
+                curMoveOnCurAxis = randint(0,1)
                 blockedAxis = 5
             else:
                 curMoveOnCurAxis = 1 if (lastMoveOnLastAxis == 0) else 0
@@ -57,8 +58,8 @@ class CubeMod(IRCBotMod):
             lastMoveOnLastAxis = curMoveOnCurAxis
             lastAxis = curAxis
             scramble += axis[curAxis][curMoveOnCurAxis]
-            if (rand(0,1)):
-                scramble += movemods[rand(0,1)]
+            if (randint(0,1)):
+                scramble += movemods[randint(0,1)]
             scramble += " "
         return scramble
 

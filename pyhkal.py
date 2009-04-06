@@ -5,6 +5,7 @@
 import asyncore, asynchat
 import re, socket
 import sys
+from random import randint
 from threading import Timer
 from utils import *
 
@@ -169,7 +170,7 @@ def main(instance=None):
     except IOError:
         PORT = 6667
         SERVER = "irc.quakenet.org"
-        NICKNAME = "FAiLHKAL" + str(rand(1,9999999))
+        NICKNAME = "FAiLHKAL" + str(randint(1,9999999))
         IDENT = "FAiLHKAL"
         PASS = ""
         MAINCHANNEL = "#ich-sucke"
