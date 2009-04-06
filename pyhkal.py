@@ -10,7 +10,7 @@ from threading import Timer
 from utils import *
 
 class IRCBot(asynchat.async_chat):
-    MODLIST = []
+    MODLIST = {}
     performqueue = []
     performfilename = "perform.list"
     def __init__(self, server="irc.quakenet.org", port=6667,ident="nexus", password="", nickname="FAiLHKAL", mainchannel="#ich-sucke", createSocket=True):
@@ -59,12 +59,12 @@ class IRCBot(asynchat.async_chat):
             data = data[:-1]
         self.data = ""
         for x in self.MODLIST:
-            l = re.findall(x.regexpattern,data)
+            l = re.findall(self.MODLIST[x].regexpattern,data)
             if (l):
                 try:
-                    x.handleInput(l[0])
+                    self.MODLIST[x].handleInput(l[0])
                 except Exception as inst:
-                    self.printErr(str(x),inst)
+                    self.printErr(str(self.MODLIST[x]),inst)
         if re.match("PING :",data):
             self.sendraw("PONG " + data.split(" ")[1])
             return
@@ -88,7 +88,7 @@ class IRCBot(asynchat.async_chat):
             module = constructor(self)
         else:
             module = constructor(self,*params)
-        self.MODLIST.append(module)
+        self.MODLIST[module.__class__.__name__] = module
 
     def sendraw(self, string):
         if (string):
@@ -196,6 +196,7 @@ def main(instance=None):
     from modules.timer import TimerMod
     from modules.tools import ToolsMod
     from modules.stfu import StfuMod
+    from modules.randquote import RandquoteMod
 
     bot.addModule(AdminMod,[ADMINAUTHPASS])
     bot.addModule(DecideMod)
@@ -205,6 +206,7 @@ def main(instance=None):
     bot.addModule(TimerMod)
     bot.addModule(ToolsMod)
     bot.addModule(StfuMod)
+    bot.addModule(RandquoteMod,["randquote.dict"])
 
     asyncore.loop()
 
