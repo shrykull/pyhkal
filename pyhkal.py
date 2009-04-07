@@ -24,6 +24,10 @@ class IRCBot(asynchat.async_chat):
         self.ident = ident
         self.nickname = nickname
         self.mainchannel = mainchannel
+        
+        #provides self to mods on rehash, else MODLIST would be empty and xyzzy
+        for x in self.MODLIST:
+            self.MODLIST[x].head = self
 
         self.initcommands = [
             "USER " + self.ident + " " + self.ident + " " + self.ident + " :Python-TiHKAL",
@@ -58,18 +62,17 @@ class IRCBot(asynchat.async_chat):
         if data.endswith("\r"):
             data = data[:-1]
         self.data = ""
+        if re.match(":(.+) PRIVMSG (.+) :(.+)", data):
+            self.onText(*re.match(":(.+) PRIVMSG (.+) :(.+)", data).group(1,2,3))
         for x in self.MODLIST:
             l = re.findall(self.MODLIST[x].regexpattern,data)
             if (l):
-                try:
+                #try:
                     self.MODLIST[x].handleInput(l[0])
-                except Exception as inst:
-                    self.printErr(str(self.MODLIST[x]),inst)
+                #except Exception as inst:
+                #    self.printErr(str(self.MODLIST[x]),inst)
         if re.match("PING :",data):
             self.sendraw("PONG " + data.split(" ")[1])
-            return
-        if re.match(":(.+) PRIVMSG (.+) :(.+)", data):
-            self.onText(*re.match(":(.+) PRIVMSG (.+) :(.+)", data).group(1,2,3))
             return
         if re.match(":(.+) NICK :(.+)",data):
             self.onNick(*re.match(":(.+) NICK :(.+)",data).group(1,2))
