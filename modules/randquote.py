@@ -23,7 +23,6 @@ class RandquoteMod(IRCBotMod):
         return [self.filename]
         
     def handler(self,matchlist):
-        #self.head.sendMsg(self.head.mainchannel,"foo boo randquote rehash boo bobo")
         if ((randint(0,100) < self.quotepercentage) or (matchlist[0] not in self.quotedict)):
             self.quotedict[matchlist[0]] = quote(matchlist[0],time(),matchlist[1])
             obj2file(self.quotedict,self.filename)
