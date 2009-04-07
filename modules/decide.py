@@ -4,6 +4,7 @@
 import re
 from modules import IRCBotMod
 from utils import ident, list2string
+from time import strftime
 
 class DecideMod(IRCBotMod):
     regexpattern = r':(.+) PRIVMSG ([\S]+) :!decide (.+)'
