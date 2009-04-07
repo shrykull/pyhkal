@@ -67,10 +67,10 @@ class IRCBot(asynchat.async_chat):
         for x in self.MODLIST:
             l = re.findall(self.MODLIST[x].regexpattern,data)
             if (l):
-                #try:
+                try:
                     self.MODLIST[x].handleInput(l[0])
-                #except Exception as inst:
-                #    self.printErr(str(self.MODLIST[x]),inst)
+                except Exception as inst:
+                    self.printErr(str(self.MODLIST[x]),inst)
         if re.match("PING :",data):
             self.sendraw("PONG " + data.split(" ")[1])
             return
