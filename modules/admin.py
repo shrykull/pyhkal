@@ -4,19 +4,26 @@
 import sys
 from modules import IRCBotMod
 import modules
-from utils import nick
+from utils import nick, obj2file, file2obj
 
 class AdminMod(IRCBotMod):
     adminhosts = []
     storage = {}
     regexpattern = r':(.+) (?:PRIVMSG|NOTICE) ([\S]+) :(!do|!py|!pydo|!auth|!rehash|spam\?)(?: (.+)|$)'
-    def __init__(self,head,adminpass="defaultpass"):
+    def __init__(self,head):
         IRCBotMod.__init__(self,head)
         self.handleInput = self.handler
-        self.adminpass = adminpass
         self.storage["bot"] = self.head
+        self.importconf()
     def rehashlist(self):
         return [self.adminpass]
+    def exportconf(self):
+        obj2file((self.adminpass),self.configfilename)
+    def importconf(self):
+        try:
+            (self.adminpass) = file2obj(self.configfilename)
+        except IOError:
+            self.adminpass = "default"
         
     def handler(self,matchlist):
         host = matchlist[0]
@@ -79,7 +86,6 @@ class AdminMod(IRCBotMod):
                     self.rehashModule(self.head.MODLIST[text])
                 
     def rehashModule(self,module):
-        print "reloading", module, "..."
         sys.modules.pop(str(module.__module__))
         newmod = __import__(module.__module__,globals(),locals(),[module.__class__.__name__])
         constructor = newmod.__dict__[module.__class__.__name__]
@@ -90,5 +96,3 @@ class AdminMod(IRCBotMod):
             self.head.addModule(constructor,module.rehashlist())
         except AttributeError:
             self.head.addModule(constructor)
-        print module, "done."
-        

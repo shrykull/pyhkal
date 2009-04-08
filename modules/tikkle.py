@@ -12,9 +12,13 @@ class TikkleMod(IRCBotMod):
     def __init__(self,head):
         IRCBotMod.__init__(self,head)
         self.handleInput = self.handler
+        self.importconf()
+    def exportconf(self):
+        obj2file((self.tikklers),self.configfilename)
+    def importconf(self):
         try:
-            self.tikklers = file2obj(self.filename)
-        except Exception:
+            (self.tikklers) = file2obj(self.configfilename)
+        except IOError:
             self.tikklers = {}
     def handler(self,matchlist):
         host = matchlist[0]
@@ -63,7 +67,7 @@ class TikkleMod(IRCBotMod):
                 for y in x.mailbox:
                     self.head.sendNotice(target,y[0].strftime("%d %b@%H:%M") + " " + y[1])
                 x.mailbox = []
-        obj2file(self.tikklers,self.filename)
+        self.exportconf()
 class tikkleuser(object):
     def __init__(self,name,regex):
         self.name = name

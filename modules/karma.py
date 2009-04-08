@@ -8,12 +8,15 @@ from utils import obj2file, file2obj
 
 class KarmaMod(IRCBotMod):
     regexpattern = r':(.+) PRIVMSG ([\S]+) :(.+)'
-    filename = "karma.dict"
     def __init__(self,head):
         IRCBotMod.__init__(self,head)
         self.handleInput = self.handler
+        self.importconf()
+    def exportconf(self):
+        obj2file((self.karmadict),self.configfilename)
+    def importconf(self):
         try:
-            self.karmadict = file2obj(self.filename)
+            (self.karmadict) = file2obj(self.configfilename)
         except IOError:
             self.karmadict = {}
     def handler(self,matchlist):
@@ -42,7 +45,7 @@ class KarmaMod(IRCBotMod):
                         self.karmadict[x[2][:-2]] = e
                     self.head.sendMsg(matchlist[1],x[2][:-2] + " hat einen karmawert von " + str(self.karmadict[x[2][:-2]].value))
             if (karmalist != []):
-                obj2file(self.karmadict,self.filename)
+                self.exportconf()
 class KarmaEntry(object):
     karmaspam = datetime.timedelta(0,600)
     def __init__(self,name):
