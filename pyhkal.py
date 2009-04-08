@@ -12,18 +12,21 @@ from utils import *
 class IRCBot(asynchat.async_chat):
     MODLIST = {}
     performqueue = []
-    performfilename = "perform.list"
-    def __init__(self, server="irc.quakenet.org", port=6667,ident="nexus", password="", nickname="FAiLHKAL", mainchannel="#ich-sucke", createSocket=True):
+    def __init__(self, server="irc.quakenet.org", port=6667,ident="nexus", password="", nickname="FAiLHKAL" + str(randint(0,9999999)), mainchannel="#ich-sucke", createSocket=True):
         if createSocket:
             asynchat.async_chat.__init__(self)
         self.set_terminator("\n")
         self.data = ""
 
-        self.server = server
-        self.port = port
-        self.ident = ident
-        self.nickname = nickname
-        self.mainchannel = mainchannel
+        if (not self.importconf()):
+            self.server = server
+            self.port = port
+            self.ident = ident
+            self.password = password
+            self.nickname = nickname
+            self.mainchannel = mainchannel
+            #overwrites the stuff above, but leaves perform as it is
+            self.exportconf()
         
         #provides self to mods on rehash, else MODLIST would be empty and xyzzy
         for x in self.MODLIST:
@@ -31,20 +34,14 @@ class IRCBot(asynchat.async_chat):
 
         self.initcommands = [
             "USER " + self.ident + " " + self.ident + " " + self.ident + " :Python-TiHKAL",
-            "PASS " + password,
+            "PASS " + self.password,
             "NICK " + self.nickname
             ]
-
-        try:
-            self.performqueue = file2obj(self.performfilename)
-        except IOError:
-            self.performqueue = []
-            obj2file(self.performqueue,self.performfilename)
 
         self.spamqueue = SpamQueue(5,5)
         if createSocket:
             self.create_socket(socket.AF_INET,socket.SOCK_STREAM)
-            self.connect((server,port))
+            self.connect((self.server,self.port))
 
     def handle_connect(self):
         print "(INFO) Connected to ", self.server + ":" + str(self.port)
@@ -92,7 +89,22 @@ class IRCBot(asynchat.async_chat):
         else:
             module = constructor(self,*params)
         self.MODLIST[module.__class__.__name__] = module
-
+        
+    def exportconf(self):
+        obj2file((self.server,self.port,self.ident,self.password,self.nickname,self.mainchannel,self.performqueue),"pyhkal.conf")
+        for x in self.MODLIST:
+            try:
+                x.exportconf()
+            except AttributeError:
+                pass #kind of ugly but needed as not every module has a conf file to export
+    def importconf(self):
+        try:
+            (self.server,self.port,self.ident,self.password,self.nickname,self.mainchannel,self.performqueue) = file2obj("pyhkal.conf")
+            return True
+        except IOError:
+            (self.server,self.port,self.ident,self.password,self.nickname,self.mainchannel,self.performqueue) = ("",0,"","","","",[])
+            return False
+        
     def sendraw(self, string):
         if (string):
             self.push(string + "\r\n")
@@ -131,6 +143,7 @@ class IRCBot(asynchat.async_chat):
 
     def printErr(self,name,inst):
         print "err in", name + "> " + str(type(inst)) + " " + str(inst.args)
+    
 
 class SpamQueue(object):
     def __init__(self,pertime,initialamount):
@@ -156,7 +169,7 @@ class SpamQueue(object):
         if ((not self.counter) or (self.resetter)):
             self.resetter = False
             self.next()
-
+            
     def do(self,tuple):
         tuple[0](*tuple[1])
 
@@ -168,29 +181,13 @@ class SpamQueue(object):
 
 def main(instance=None):
     global bot
-    try:
-        (SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS) = file2obj("pyhkal.conf")
-    except IOError:
-        PORT = 6667
-        SERVER = "irc.quakenet.org"
-        NICKNAME = "FAiLHKAL" + str(randint(1,9999999))
-        IDENT = "FAiLHKAL"
-        PASS = ""
-        MAINCHANNEL = "#ich-sucke"
-        ADMINAUTHPASS = "default"
-        obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS),"pyhkal.conf")
 
     if instance:
-        IRCBot.__init__(instance, SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL, False)
+        IRCBot.__init__(instance, instance.server,instance.port,instance.ident,instance.password,instance.nickname,instance.mainchannel, False)
         bot = instance
     else:
-        bot = IRCBot(SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL)
+        bot = IRCBot()
 
-    def exportconf():
-        obj2file((SERVER,PORT,IDENT,PASS,NICKNAME,MAINCHANNEL,ADMINAUTHPASS),"pyhkal.conf")
-    def exportperform():
-        obj2file(bot.performqueue,bot.performfilename)
-        
     from modules.admin import AdminMod
     from modules.decide import DecideMod
     from modules.cube import CubeMod
@@ -201,7 +198,7 @@ def main(instance=None):
     from modules.stfu import StfuMod
     from modules.randquote import RandquoteMod
 
-    bot.addModule(AdminMod,[ADMINAUTHPASS])
+    bot.addModule(AdminMod)
     bot.addModule(DecideMod)
     bot.addModule(CubeMod)
     bot.addModule(KarmaMod)
@@ -209,7 +206,7 @@ def main(instance=None):
     bot.addModule(TimerMod)
     bot.addModule(ToolsMod)
     bot.addModule(StfuMod)
-    bot.addModule(RandquoteMod,["randquote.dict"])
+    bot.addModule(RandquoteMod)
 
     asyncore.loop()
 
