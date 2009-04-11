@@ -46,6 +46,10 @@ class ToolsMod(IRCBotMod):
                 elif (w[1] == "lag?"):
                     self.head.sendMsg(w[0],chr(1) + "PING " + str(time.time()) + chr(1))
                     self.addtrigger([target,self.pingreply,r':({0}[\S]+) NOTICE (?:[\S]+) :.PING ([\d\.]+).'.format(w[0])])
+                #removed - bot crashes if the calculation is too difficult (eg .calc 5**(5**(5**5))) - anyone knows a fix for this?    
+                #http://try-python.mired.org/ has a timeout solution for this... feel free to implement it if you need .calc
+                #elif (w[0] == ".calc") and (re.match(r'[0-9\s\\\+\*\-\(\)\j]',matchlist[3][6:])):
+                #    self.head.sendMsg(target,matchlist[3][6:] + " = " + str(eval(matchlist[3][6:])))
             elif (matchlist[1] == "PRIVMSG"):
                 if (w[0] == "lag?"):
                     self.head.sendMsg(nick(host),chr(1) + "PING " + str(time.time()) + chr(1))
