@@ -53,7 +53,7 @@ class TikkleMod(IRCBotMod):
                 if (t[1] == "tikkle"):
                     try:
                         self.tikklers[t[2]].mailbox.append([datetime.datetime.now(),"<" + nick(host) + "> " + list2string(t[3:]) if len(t) > 2 else "*tikkle*"])
-                        self.head.sendMsg(nick(host),"Message sent.")
+                        self.head.sendNotice(nick(host),"Message sent.")
                     except Exception:
                         self.head.sendNotice(nick(host),"Couldnt send message. Either you or the target isnt registered.")
         if nick(host) in self.tikklers:
