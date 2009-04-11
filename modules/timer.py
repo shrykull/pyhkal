@@ -3,6 +3,7 @@
 
 from modules import IRCBotMod
 from utils import nick
+from threading import Timer
 
 class TimerMod(IRCBotMod):
     regexpattern = r':(.+) PRIVMSG ([\S]+) :.*timer:(\d+):(.*)'
