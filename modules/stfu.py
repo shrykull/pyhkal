@@ -9,7 +9,7 @@ class StfuMod(IRCBotMod):
     defaulttime = 1800
     def __init__(self,head):
         IRCBotMod.__init__(self,head)
-        self.regexpattern = self.regexpattern.format(self.head.mainchannel)
+        self.regexpattern = self.regexpattern.format(self.head.mainchannel.name)
         self.handleInput = self.stfutrigger
         self.timer = None
     def __del__(self):
@@ -25,7 +25,7 @@ class StfuMod(IRCBotMod):
             time = self.defaulttime
         if (not self.moderated):
             self.head.sendMsg(target,"*mute*")
-            self.head.sendraw("mode {0} +m".format(self.head.mainchannel))
+            self.head.sendraw("mode {0} +m".format(self.head.mainchannel.name))
             self.moderated = True
             self.timer = Timer(time,self.unmute)
             self.timer.start()
@@ -37,5 +37,5 @@ class StfuMod(IRCBotMod):
                 self.timer = None
     def unmute(self):
         self.moderated = False
-        self.head.sendraw(("mode {0} -m").format(self.head.mainchannel))
+        self.head.sendraw(("mode {0} -m").format(self.head.mainchannel.name))
 

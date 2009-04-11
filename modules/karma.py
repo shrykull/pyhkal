@@ -20,7 +20,7 @@ class KarmaMod(IRCBotMod):
         except IOError:
             self.karmadict = {}
     def handler(self,matchlist):
-        if (matchlist[1] == self.head.mainchannel):
+        if (matchlist[1] == self.head.mainchannel.name):
             karmalist = re.findall(r'(\S\S+\+\+)(?:\s|$)|([\S]\S+--)(?:\s|$)|(\S\S+==)(?:\s|$)',matchlist[2])
             for x in karmalist:
                 if x[0]:

@@ -17,14 +17,15 @@ class IRCBot(asynchat.async_chat):
             asynchat.async_chat.__init__(self)
         self.set_terminator("\n")
         self.data = ""
-
+        self.newmainchannelnicklist = {}
+        
         if (not self.importconf()):
             self.server = server
             self.port = port
             self.ident = ident
             self.password = password
             self.nickname = nickname
-            self.mainchannel = mainchannel
+            self.mainchannel = channel(mainchannel)
             #overwrites the stuff above, but leaves perform as it is
             self.exportconf()
         
@@ -71,8 +72,14 @@ class IRCBot(asynchat.async_chat):
         if re.match("PING :",data):
             self.sendraw("PONG " + data.split(" ")[1])
             return
+        if re.match(":(.+) MODE :(.+)",data):
+            self.onMode(*re.match(":(\S) MODE (\S+) (\S+) (.+)",data).group(1,2,3,4))
+            return
         if re.match(":(.+) NICK :(.+)",data):
             self.onNick(*re.match(":(.+) NICK :(.+)",data).group(1,2))
+            return
+        if re.match(":(.+) JOIN :(.+)",data):
+            self.onJoin(*re.match(":(.+) JOIN (.+)",data).group(1,2))
             return
         if re.match(":.+ (\d\d\d) (.+)",data):
             self.onRawNumeric(*re.match(":.+ (\d+) (.+)",data).group(1,2))
@@ -80,6 +87,8 @@ class IRCBot(asynchat.async_chat):
         if re.match(".*NOTICE .+:.+host.+", data):
             for x in self.initcommands:
                 self.sendraw(x)
+            return
+        if re.match(":(.+) PRIVMSG (.+) :(.+)", data):
             return
         print "( >> )", data
 
@@ -91,7 +100,7 @@ class IRCBot(asynchat.async_chat):
         self.MODLIST[module.__class__.__name__] = module
         
     def exportconf(self):
-        obj2file((self.server,self.port,self.ident,self.password,self.nickname,self.mainchannel,self.performqueue),"pyhkal.conf")
+        obj2file((self.server,self.port,self.ident,self.password,self.nickname,self.mainchannel.name,self.performqueue),"pyhkal.conf")
         for x in self.MODLIST:
             try:
                 x.exportconf()
@@ -99,29 +108,51 @@ class IRCBot(asynchat.async_chat):
                 pass #kind of ugly but needed as not every module has a conf file to export
     def importconf(self):
         try:
-            (self.server,self.port,self.ident,self.password,self.nickname,self.mainchannel,self.performqueue) = file2obj("pyhkal.conf")
+            (self.server,self.port,self.ident,self.password,self.nickname,self.mainchannelname,self.performqueue) = file2obj("pyhkal.conf")
+            self.mainchannel = Channel(self.mainchannelname)
             return True
         except IOError:
-            (self.server,self.port,self.ident,self.password,self.nickname,self.mainchannel,self.performqueue) = ("",0,"","","","",[])
+            (self.server,self.port,self.ident,self.password,self.nickname,self.mainchannel,self.performqueue) = ("",0,"","","",Channel(""),[])
             return False
         
     def sendraw(self, string):
+        if (len(string.split(" ")) > 1):
+            if ((string.split(" ")[0].upper() == "NAMES") and (string.split(" ")[1] == self.mainchannel.name)):
+                self.prepareNicklist()
         if (string):
             self.push(string + "\r\n")
-
+    
+    def onMode(self,host,channel,flags,props):
+        print "(MODE)", host, channel, ":", flags, props
+        #basic approach, send a NAMES request everytime something changes with the nicklist
+        if (channel == self.mainchannel.name):
+            self.sendraw("NAMES " + self.mainchannel.name)
+        
+    
     def onNick(self,oldhost,newnick):
         if (nick(oldhost) == self.nickname):
             self.nickname = newnick
         print "(NICK)", nick(oldhost), "=>", newnick
-
-    def quit(self):
-        self.sendraw("QUIT :... denn #ich-sucke härter als ihr alle zusammen...")
-        print "(QUIT)", "Terminating..."
-        exit()
+        
+    def onJoin(self,host,channel):
+        print "(JOIN)", host, "=>", channel
+        if ((host == self.hostmask) and (channel == self.mainchannel.name)):
+            self.prepareNicklist()
+        if (channel == self.mainchannel.name):
+            self.mainchannel.nicklist[nick(host)] = nick(host)
 
     def onRawNumeric(self,numeric,text):
         numeric = int(numeric)
-        if ((numeric == 376) or (numeric == 422)):
+        #adds every user in channel to the temporary nicklist-dict
+        if (numeric == 353):
+            chanlist = text.split(":")[1].split(" ")
+            for pnick in chanlist:
+                self.newmainchannelnicklist[re.findall((r'(?:[@\+]|^)(\S+)'),pnick)[0]] = pnick
+        if (numeric == 366):
+            self.mainchannel.setNicklistdict(self.newmainchannelnicklist)
+            self.prepareNicklist()
+        elif ((numeric == 376) or (numeric == 422)):
+            self.sendraw("join " + self.mainchannel.name)
             for x in self.performqueue:
                 self.sendraw(x)
 
@@ -143,8 +174,37 @@ class IRCBot(asynchat.async_chat):
 
     def printErr(self,name,inst):
         print "err in", name + "> " + str(type(inst)) + " " + str(inst.args)
-    
+        
+    def quit(self):
+        self.sendraw("QUIT :... denn #ich-sucke härter als ihr alle zusammen...")
+        print "(QUIT)", "Terminating..."
+        exit()
+    def prepareNicklist(self):
+        self.newmainchannelnicklist = {}
 
+class Channel(object):
+    def __init__(self,name):
+        self.name = name
+        self.nicklist = {}
+    def isOp(self,nick):
+        if (self.nicklist[nick][0] == '@'):
+            return True
+        return False
+    def isVoice(self,nick):
+        if (self.nicklist[nick][0] == '+'):
+            return True
+        return False        
+    def isHalfOp(self,nick):
+        if (self.nicklist[nick][0] == '%'):
+            return True
+        return False        
+    def isReg(self,nick):
+        if ((not self.isOp(nick)) and (not self.isHalfOp(nick)) and (not self.isVoice(nick))):
+            return True
+        return False        
+    def setNicklistdict(self,nickdict):
+        self.nicklist = nickdict
+        
 class SpamQueue(object):
     def __init__(self,pertime,initialamount):
         self.time = pertime

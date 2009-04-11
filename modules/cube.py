@@ -16,7 +16,7 @@ class CubeMod(IRCBotMod):
         host = matchlist[0]
         target = matchlist[1]
         text = matchlist[2]
-        if target == self.head.mainchannel:
+        if target == self.head.mainchannel.name:
             if (text[0:2] == ".3"):
                 s = re.findall("(\d+)",text)
                 num = 25
