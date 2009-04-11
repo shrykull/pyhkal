@@ -15,8 +15,6 @@ class AdminMod(IRCBotMod):
         self.handleInput = self.handler
         self.storage["bot"] = self.head
         self.importconf()
-    def rehashlist(self):
-        return [self.adminpass]
     def exportconf(self):
         obj2file((self.adminpass),self.configfilename)
     def importconf(self):
@@ -72,17 +70,7 @@ class AdminMod(IRCBotMod):
                     instance.__class__ = pyhkal.IRCBot
                     pyhkal.main(instance)
                     # # # dont rehash mods, just rehash core # # # 
-                    
-                    #and rehash the mods with their new head
-                    #for x in self.head.MODLIST:
-                    #    #adminmod has to be rehashed last, or it loses its references while its still working
-                    #    if (x != "AdminMod"):
-                    #        self.rehashModule(self.head.MODLIST[str(x)])
-                    #if ("AdminMod" in self.head.MODLIST):
-                    #    self.rehashModule(self.head.MODLIST["AdminMod"])
                 else:
-                    #here you can rehash mods specifically - should be enough for now <.<
-                    #TODO: !rehash All
                     self.rehashModule(self.head.MODLIST[text])
                 
     def rehashModule(self,module):
@@ -91,8 +79,4 @@ class AdminMod(IRCBotMod):
         constructor = newmod.__dict__[module.__class__.__name__]
         globals()[str(module.__module__)] = newmod
         self.head.MODLIST.pop(module.__class__.__name__)
-        try:
-            #TODO: fix this hack // simplify module reloading with constructorparameters
-            self.head.addModule(constructor,module.rehashlist())
-        except AttributeError:
-            self.head.addModule(constructor)
+        self.head.addModule(constructor)

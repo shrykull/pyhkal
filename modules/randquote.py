@@ -16,8 +16,6 @@ class RandquoteMod(IRCBotMod):
         self.regexpattern = self.regexpattern.format(head.mainchannel.name)
         self.handleInput = self.handler
         self.importconf()
-    def rehashlist(self):
-        return [self.filename]
     def exportconf(self):
         obj2file((self.quotedict),self.configfilename)
     def importconf(self):
