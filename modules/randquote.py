@@ -44,8 +44,8 @@ class RandquoteMod(IRCBotMod):
         #on highlight post randquote - eventually.
         if (firstword in self.head.mainchannel.nicklist):    
             if ((randint(0,100) < self.quotepostprobability) and (matchlist[0] in self.quotedict)):
-                quote = self.quotedict[firstword]
-                self.head.sendMsg(self.head.mainchannel.name,'<' + quote.nick + '> ' + quote.quotestring)
+                q = self.quotedict[firstword]
+                self.head.sendMsg(self.head.mainchannel.name,'<' + q.nick + '> ' + q.quotestring)
             
 
 class quote(object):
