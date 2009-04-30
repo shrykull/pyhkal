@@ -35,7 +35,7 @@ class IRCBot(asynchat.async_chat):
 
         self.initcommands = [
             "USER " + self.ident + " " + self.ident + " " + self.ident + " :Python-TiHKAL",
-            "PASS " + self.password,
+            "PASS " + self.ident + ":" + self.password,
             "NICK " + self.nickname
             ]
 
@@ -46,8 +46,11 @@ class IRCBot(asynchat.async_chat):
 
     def handle_connect(self):
         print "(INFO) Connected to ", self.server + ":" + str(self.port)
+        Timer(5,self.runinitcommands,()).start()
         pass
-
+    def runinitcommands(self):
+        for x in self.initcommands:
+            self.sendraw(x)
     def handle_expt(self):
         print "(INFO) Connection to ", self.server + ":" + str(self.port), "failed."
         self.close()
@@ -60,6 +63,7 @@ class IRCBot(asynchat.async_chat):
         if data.endswith("\r"):
             data = data[:-1]
         self.data = ""
+        print "( >> )", data
         if re.match(":(.+) PRIVMSG (.+) :(.+)", data):
             self.onText(*re.match(":(.+) PRIVMSG (.+) :(.+)", data).group(1,2,3))
         for x in self.MODLIST:
@@ -85,12 +89,10 @@ class IRCBot(asynchat.async_chat):
             self.onRawNumeric(*re.match(":.+ (\d+) (.+)",data).group(1,2))
             return
         if re.match(".*NOTICE .+:.+host.+", data):
-            for x in self.initcommands:
-                self.sendraw(x)
+            self.runinitcommands()
             return
         if re.match(":(.+) PRIVMSG (.+) :(.+)", data):
             return
-        print "( >> )", data
 
     def addModule(self, constructor,params=None):
         if (not params):
@@ -132,11 +134,12 @@ class IRCBot(asynchat.async_chat):
     def onNick(self,oldhost,newnick):
         if (nick(oldhost) == self.nickname):
             self.nickname = newnick
+            self.hostname = newnick + "!" + oldhost.split("!")[1:]
         print "(NICK)", nick(oldhost), "=>", newnick
         
     def onJoin(self,host,channel):
         print "(JOIN)", host, "=>", channel
-        if ((host == self.hostmask) and (channel == self.mainchannel.name)):
+        if ((nick(host) == self.nickname) and (channel == self.mainchannel.name)):
             self.prepareNicklist()
         if (channel == self.mainchannel.name):
             self.mainchannel.nicklist[nick(host)] = nick(host)
