@@ -19,7 +19,7 @@ class DecideMod(IRCBotMod):
                           " entscheiden.")
 
     def regexdecide(self,text, num):
-        matchlist = sorted(re.findall(r'(".+?"|(?<!").+?(?!"))(?:\s|$)',text))
+        matchlist = sorted(re.findall(r'(".+?"|(?<!").+?(?!"))(?:\s+|$)',text))
         c = asciicount(text) + asciicount(strftime("%d/%m/%Y"))
         if len(matchlist) > 1:
             return "für " + matchlist[(c + (num % 100)) % len(matchlist)]
