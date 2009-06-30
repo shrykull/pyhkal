@@ -4,7 +4,7 @@
 import datetime
 import re
 from modules import IRCBotMod
-from utils import obj2file, file2obj
+from utils import obj2file, file2obj, nick
 
 class KarmaMod(IRCBotMod):
     regexpattern = r':(.+) PRIVMSG ([\S]+) :(.+)'
@@ -20,7 +20,7 @@ class KarmaMod(IRCBotMod):
         except IOError:
             self.karmadict = {}
     def handler(self,matchlist):
-        if (matchlist[1] == self.head.mainchannel.name):
+        if ((matchlist[1] == self.head.mainchannel.name) and (not self.head.mainchannel.isReg(nick(matchlist[0])))):
             karmalist = re.findall(r'(\S\S+\+\+)(?:\s|$)|([\S]\S+--)(?:\s|$)|(\S\S+==)(?:\s|$)',matchlist[2])
             for x in karmalist:
                 if x[0]:

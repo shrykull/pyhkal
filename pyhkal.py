@@ -25,7 +25,7 @@ class IRCBot(asynchat.async_chat):
             self.ident = ident
             self.password = password
             self.nickname = nickname
-            self.mainchannel = channel(mainchannel)
+            self.mainchannel = Channel(mainchannel)
             #overwrites the stuff above, but leaves perform as it is
             self.exportconf()
         
