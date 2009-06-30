@@ -76,8 +76,8 @@ class IRCBot(asynchat.async_chat):
         if re.match("PING :",data):
             self.sendraw("PONG " + data.split(" ")[1])
             return
-        if re.match(":(.+) MODE :(.+)",data):
-            self.onMode(*re.match(":(\S) MODE (\S+) (\S+) (.+)",data).group(1,2,3,4))
+        if re.match(":(\S+) MODE (\S+) (\S+)(.+?)",data):
+            self.onMode(*re.match(":(\S+) MODE (\S+) (\S+)(.+?)",data).group(1,2,3,4))
             return
         if re.match(":(.+) NICK :(.+)",data):
             self.onNick(*re.match(":(.+) NICK :(.+)",data).group(1,2))
