@@ -260,6 +260,7 @@ def main(instance=None):
     from modules.tools import ToolsMod
     from modules.stfu import StfuMod
     from modules.randquote import RandquoteMod
+    from modules.factoid import FactoidMod
 
     bot.addModule(AdminMod)
     bot.addModule(DecideMod)
@@ -270,6 +271,7 @@ def main(instance=None):
     bot.addModule(ToolsMod)
     bot.addModule(StfuMod)
     bot.addModule(RandquoteMod)
+    bot.addModule(FactoidMod)
 
     asyncore.loop()
 
