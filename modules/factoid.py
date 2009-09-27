@@ -39,13 +39,9 @@ class FactoidMod(IRCBotMod):
                         self.head.sendErr(target,inst)
                     else: # add factoid
                         try:
-                            print "--"
                             mm = re.match("factoid set \/(.+)\/ (.+)",list2string(t[0:]))
                             regex = mm.group(1)
                             reaction = mm.group(2)
-                            print regex
-                            print reaction
-                            print "--"
                             cre = re.compile(regex)
                             
                             self.factoids.append( (cre, reaction ) )
@@ -60,6 +56,13 @@ class FactoidMod(IRCBotMod):
                     else:
                         self.head.sendMsg(target, "No match..")
 
+
+                elif (t[1] == "list"): # 400 max., so we should split here :<
+
+                    self.head.sendMsg(target, "I know %s factoids:" % (len(self.factoids)) )
+                    gets = list2string ( [ "[%s] %s -> %s" % (i, cre.pattern, subst) for i, (cre, subst) in enumerate(self.factoids) ] )
+                    self.head.sendMsg(target, gets)
+                    
                 elif (t[1] == "del") and (self.head.mainchannel.isOp(nick(host))) and (int(t[2]) <= len(self.factoids)) :
                     del(self.factoids[int(t[2])])
                     self.head.sendMsg(target, "Done.")
@@ -69,8 +72,13 @@ class FactoidMod(IRCBotMod):
                 if cre.search(text):
                     matches.append( cre.sub(subst, text) )
 
-            if (len(matches) > 0): #and (len(t[1:]) > 15) and (len(t) > 3):
-                 self.head.sendMsg(target, matches[randint(0,len(matches)-1)].replace("$who", nick(host)) ) # choose random factoid, of all matching
+            if (len(matches) > 0): # and (len(t[1:]) > 15) and (len(t) > 3):
+                rply = matches[randint(0,len(matches)-1)].replace("$who", nick(host)) # choose random factoid, regard replacement of $who
+                rply = rply.replace("\n","\\n") # output validation :)
+                if rply.startswith("A:"): # reactions starting with "A:" will be send as /me
+                     self.head.sendAction(target, rply[2:]) # strip first two chars
+                else:
+                     self.head.sendMsg(target, rply)
  #               except ValueError:
  #                   pass
             #print(list2string(matches,","))
