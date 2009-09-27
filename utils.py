@@ -22,7 +22,4 @@ def ident(text):
     return list2string(text.split("!")[1].split("@")[0],"")
 
 def list2string(l,s = " "):
-    r = ""
-    for x in l:
-        r = r + s+ x
-    return r[len(s):]
+    return s.join(l)
