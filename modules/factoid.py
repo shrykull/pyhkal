@@ -69,8 +69,16 @@ class FactoidMod(IRCBotMod):
 
         elif (randint(0,100) < self.factoidprobability): # give factoid
             for cre, subst in self.factoids:
-                if cre.search(text):
-                    matches.append( cre.sub(subst, text) )
+                m = cre.search(text)
+                if m:
+                    tmp = cre.sub(subst, m.group(0))
+                    matches.append( tmp )
+                    print "----DEBUG"
+                    print "text: " + text
+                    print "subst: " + subst
+                    print "added match: " + tmp
+                    print "----DEBUG"
+    
 
             if (len(matches) > 0): # and (len(t[1:]) > 15) and (len(t) > 3):
                 rply = matches[randint(0,len(matches)-1)].replace("$who", nick(host)) # choose random factoid, regard replacement of $who
