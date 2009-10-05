@@ -1,0 +1,15 @@
+Known Bugs, yet to be fixed:
+* TikkleMod
+    befriending-function is checking nicknames case-sensitively
+* KarmaMod
+    karma is aware of case :<
+    thus chosi has different karma than Chosi. i'm losing lot's of points here!!!1 ;-)
+
+(case-sensitivity is generally a thing worth analyzing here ;))
+
+
+Todo (i.e. Upcoming Features):
+* DecideMod
+    Perform a decision-calculation for someone else, i.e.
+    !decide -n <nickname> <decidestring>
+
