@@ -39,22 +39,22 @@ class FactoidMod(IRCBotMod):
                     except Exception as inst:
                         self.head.sendErr(target,inst)
                     else: # add factoid
-                        try:
+                        #try:
                             mm = re.match("factoid (set|add) \/(.+)\/ (.+)",list2string(t[0:]))
-                            print mm.groups
+#                            print mm.groups
                             regex = mm.group(2)
                             reaction = mm.group(3)
-                            print "regex: "+mm.group(1) + " reaction: "+mm.group(2)
+#                            print "regex: "+mm.group(1) + " reaction: "+mm.group(2)
                             cre = re.compile(regex)
                             
                             self.factoids.append( (cre, reaction ) )
                             if (self.head.mainchannel.isOp(nick(host))):
                                 self.head.sendMsg(target,"Okay, "+ nick(host)+".")
                             else:
-                                self.head.sendMsg(self.head.mainchannel.name, "Added [%s] %s »%s« via non-op" % (regex, reaction, list2string(t[3:]))) 
+                                self.head.sendMsg(self.head.mainchannel.name, "Added [%s] »%s« via non-op" % (regex, reaction) 
 
-                        except:
-                            self.head.sendMsg(target,"Invalid Regex, "+ nick(host)+" :<")
+                        #except:
+                        #    self.head.sendMsg(target,"Invalid Regex, "+ nick(host)+" :<")
 
                 elif (t[1] == "get"):
                     gets = [ "[%s] %s -> %s" % (i, cre.pattern, subst) for i, (cre, subst) in enumerate(self.factoids) if t[2] in cre.pattern ]
