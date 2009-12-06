@@ -12,7 +12,7 @@ from utils import *
 class IRCBot(asynchat.async_chat):
     MODLIST = {}
     performqueue = []
-    def __init__(self, server="irc.quakenet.org", port=6667,ident="nexus", password="", nickname="FAiLHKAL" + str(randint(0,9999999)), mainchannel="#ich-sucke", createSocket=True):
+    def __init__(self, server="irc.quakenet.org", port=6667,ident="foobar", password="", nickname="FAiLHKAL" + str(randint(0,9999999)), mainchannel="#h4xkal", createSocket=True):
         if createSocket:
             asynchat.async_chat.__init__(self)
         self.set_terminator("\n")
@@ -166,6 +166,12 @@ class IRCBot(asynchat.async_chat):
         string = "PRIVMSG " + target + " :" + text
         print "(P<<M)", string
         self.spamqueue.add(self.sendraw,[string])
+
+    def sendAction(self,target,text):
+        string = "PRIVMSG " + target + " :\x01ACTION " + text+"\x01"
+        print "(P<<M)", string
+        self.spamqueue.add(self.sendraw,[string])
+
 
     def sendNotice(self,target,text):
         string = "NOTICE " + target + " :" + text
